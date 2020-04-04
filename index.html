@@ -1,0 +1,61 @@
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<script src="/static/vue.js"></script>
+		<script src="/socket.io/socket.io.js"></script>
+		<title>KARTY33</title>
+		<style>
+			*{margin:0;padding:0;box-sizing: border-box;}
+			body{font-family: sans-serif;}
+			.own-cards{display:flex;flex-direction: row;}
+			.card{width:150px;height:200px;border: 1px solid black;padding:4px;}
+			.black-card{background: #000;color:#fff;}
+			.body{display:grid; grid-template-areas: 'sidebar black' 'played played' 'own own';}
+			.sidebar{grid-area: sidebar;}
+			.black-card{grid-area: black;}
+			.played-cards{grid-area: played;}
+			.own-cards {grid-area: own;}
+		</style>
+	</head>
+	<body>
+		<div id="app" class="body">
+			<div class="sidebar">
+				<h3>Grasz jako: {{me.nick}}</h3>
+				<div v-if="me.isCzar" class="czar">
+					<h2>Jesteś czarem!</h2>
+					<button @click="nextRound">Następna runda</button>
+				</div>
+
+				<div class="round">
+					<h3>Runda #{{round.number}}</h3>
+					<div class="players">
+						<div class="player" v-for="player in players">
+							{{player.nick}} - {{player.points}} punktów {{player.isCzar ? ', jest czarem' : ''}}
+						</div>
+					</div>
+				</div>
+			</div>
+			
+			
+			<div class="own-cards" v-if="!me.isCzar">
+				<div class="card" v-for="(card, n) in me.cards">
+					{{card}}<br>
+					<button v-if="me.state == 0" @click="selectCard(card, n)">Wybierz</button>
+				</div>
+			</div>
+			
+			<div class="card black-card">
+				{{round.blackCard}}
+			</div>
+			<div class="played-cards">
+				<div class="card" v-for="(cards, playerID) in round.whiteCards">
+					{{cards}}
+				</div>
+				
+			</div>
+		
+		{{players}}
+		</div>
+	</body>
+	<script src="/static/game.js"></script>
+</html>
