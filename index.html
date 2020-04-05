@@ -10,11 +10,12 @@
 			.own-cards{display:flex;flex-direction: row;}
 			.card{width:150px;height:200px;border: 1px solid black;padding:4px;}
 			.black-card{background: #000;color:#fff;}
-			.body{display:grid; grid-template-areas: 'sidebar black' 'played played' 'own own';}
+			.body{display:grid; grid-template-areas: 'black sidebar' 'played played' 'own own' 'chat chat';}
 			.sidebar{grid-area: sidebar;}
 			.black-card{grid-area: black;}
-			.played-cards{grid-area: played;}
+			.played-cards{grid-area: played;display:flex;flex-direction: row;}
 			.own-cards {grid-area: own;}
+			.chat{grid-area: chat; white-space: pre; overflow-y: scroll; min-height: 250px; background: lightgrey;}
 		</style>
 	</head>
 	<body>
@@ -23,14 +24,14 @@
 				<h3>Grasz jako: {{me.nick}}</h3>
 				<div v-if="me.isCzar" class="czar">
 					<h2>Jesteś czarem!</h2>
-					<button @click="nextRound">Następna runda</button>
 				</div>
 
 				<div class="round">
 					<h3>Runda #{{round.number}}</h3>
 					<div class="players">
-						<div class="player" v-for="player in players">
-							{{player.nick}} - {{player.points}} punktów {{player.isCzar ? ', jest czarem' : ''}}
+						<div class="player" v-for="player of orderedPlayers">
+							{{player.nick}}: {{player.points}} pkt
+							{{player.isCzar ? 'czar' : (player.state == 0 ? 'wybiera' : '')}}
 						</div>
 					</div>
 				</div>
@@ -48,13 +49,17 @@
 				{{round.blackCard}}
 			</div>
 			<div class="played-cards">
+				<h3>Zagrane karty:</h3>
 				<div class="card" v-for="(cards, playerID) in round.whiteCards">
-					{{cards}}
+					<span v-if="me.state == 2">
+						{{cards}}<br>
+						<button v-if="me.isCzar" @click="winCard(playerID)">Wybierz</button>
+					</span>
 				</div>
 				
 			</div>
-		
-		{{players}}
+
+			<div class="chat" id="chat"><h3>Czat:</h3>{{chat}}</div>
 		</div>
 	</body>
 	<script src="/static/game.js"></script>
