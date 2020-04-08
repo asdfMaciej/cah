@@ -36,6 +36,7 @@ var app = new Vue({
 	data: {
 		players: {},
 		round: {},
+		serverSettings: {},
 		chat: "",
 		socket: null,
 		id: null,
@@ -66,11 +67,12 @@ var app = new Vue({
 		this.socket.on('STATE', (state) => {
 			this.players = state.players;
 			this.round = state.round;
+			this.serverSettings = state.settings;
 		});
 		this.socket.on('CHAT', (message) => {
-			this.chat += message + "\n";
-			let chat = document.querySelector("#chat");
-			chat.scrollTop = chat.scrollHeight;
+			this.chat =  message + "\n" + this.chat;
+			//let chat = document.querySelector("#chat");
+			//chat.scrollTop = chat.scrollHeight;
 		});
 		this.socket.on('disconnect', () => {
 			this.connected = 1;
@@ -103,6 +105,9 @@ var app = new Vue({
 		},
 
 		selectCard: function(card, index) {
+			if (this.me.state != 0)
+				return;
+
 			if (card == "_")
 				card = prompt("Podaj zawartość karty:");
 			this.socket.emit('SELECT CARD', {card: card, index: index});
@@ -110,6 +115,9 @@ var app = new Vue({
 		},
 
 		winCard: function(playerNick) {
+			if (!(this.me.isCzar && this.me.state == 2))
+				return;
+
 			this.socket.emit('WIN CARD', {nick: playerNick});
 		}//
 	},
@@ -124,6 +132,17 @@ var app = new Vue({
 		orderedPlayers: function() {
 			let p = Object.values(this.players);
 			return p.sort((a, b) => {return a.index - b.index});
+		},
+
+		stateText: function() {
+			let states = {
+				0: this.me.isCzar ? 'Jesteś czarem - czekasz aż inni wybiorą karty.': 'Gracze wybierają karty.',
+				1: this.me.isCzar ? 'Jesteś czarem - czekasz aż inni wybiorą karty.': 'Wybrałeś już karty, czekaj za innymi.',
+				2: this.me.isCzar ? 'Jesteś czarem - wybierz najśmieszniejszą kartę!': 'Czar wybiera najśmieszniejszą kartę.',
+				3: 'Za chwilę rozpocznie się kolejna runda.'
+			};
+
+			return states[this.me.state];
 		}
 	}
 });

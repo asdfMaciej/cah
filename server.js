@@ -18,11 +18,14 @@ function shuffle(a) {
         const j = Math.floor(Math.random() * (i + 1));
         [a[i], a[j]] = [a[j], a[i]];
     }
-    return JSON.parse(JSON.stringify(a));
+    return copy(a);
 }
 
 function strCount(s1, s2) { 
     return (s1.length - s1.replace(new RegExp(s2,"g"), '').length) / s2.length;
+}
+function copy(e) {
+	return JSON.parse(JSON.stringify(e));
 }
 
 var express = require('express');
@@ -81,7 +84,7 @@ let currentDeck = {
 }
 
 const DECK_CODES = ['DADD6', 'FXA6V'];
-const WIN_THRESHOLD = 8;
+const WIN_THRESHOLD = 2;
 const DISCONNECT_AFTER_SECONDS = 10;
 const SHOW_WINNER_SECONDS = 5;
 const WHITE_BLANK_PERCENTAGE = 5;
@@ -91,7 +94,7 @@ const P_SELECTED = 1;
 const P_FINAL = 2;
 const P_WINNER = 3;
 
-includeDecks(DECK_CODES);
+includeDecks(copy(DECK_CODES));
 
 function includeDecks(DECK_CODES) {
 	let deckCodes = DECK_CODES;
@@ -136,14 +139,14 @@ function getRandomWhiteCards(n) {
 	for (let a = 0; a < n; a++) {
 		c.push(currentDeck.white.shift());
 		if (!currentDeck.white.length)
-			currentDeck.white = JSON.parse(JSON.stringify(shuffle(deck.white)));
+			currentDeck.white = copy(shuffle(deck.white));
 	}
 	return c;
 }
 
 function getRandomBlackCard() {
 	if (!currentDeck.black.length)
-		currentDeck.black = JSON.parse(JSON.stringify(shuffle(deck.black)));
+		currentDeck.black = copy(shuffle(deck.black));
 	return currentDeck.black.shift();
 }
 
@@ -358,9 +361,10 @@ function disconnectPlayerSocket(nick) {
 		if (connections[socketID] == nick)
 			delete connections[socketID];
 
-	for (socketID in pings)
-		if (socketID == players[nick].socketID)
-			delete pings[socketID];
+	if (nick in players)
+		for (socketID in pings)
+			if (socketID == players[nick].socketID)
+				delete pings[socketID];
 }
 
 function disconnectPlayer(nick) {
@@ -373,7 +377,9 @@ function disconnectPlayer(nick) {
 
 	disconnectPlayerSocket(nick);
 
-	delete pings[players[nick].socketID];
+	if (nick in players)
+		delete pings[players[nick].socketID];
+
 	delete players[nick];
 
 	chat(`Rozłączył się ${nick}`);

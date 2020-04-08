@@ -4,59 +4,58 @@
 		<script src="/static/vue.js"></script>
 		<script src="/socket.io/socket.io.js"></script>
 		<title>KARTY33</title>
-		<style>
-			*{margin:0;padding:0;box-sizing: border-box;}
-			body{font-family: sans-serif;}
-			.own-cards{display:flex;flex-direction: row;}
-			.card{width:150px;height:200px;border: 1px solid black;padding:4px;}
-			.card.winner{background: gold;}
-			.black-card{background: #000;color:#fff;}
-			.body{display:grid; grid-template-areas: 'black sidebar' 'played played' 'own own' 'chat chat';}
-			.sidebar{grid-area: sidebar;}
-			.black-card{grid-area: black;}
-			.played-cards{grid-area: played;display:flex;flex-direction: row;}
-			.own-cards {grid-area: own;}
-			.chat{grid-area: chat; white-space: pre; overflow-y: scroll; height: 300px; background: lightgrey;}
-		</style>
+		<link href="https://fonts.googleapis.com/css2?family=Cabin:wght@400;500;600;700&display=swap" rel="stylesheet">
+		<link rel="stylesheet" href="static/style.css">
 	</head>
 	<body>
 		<div id="app" class="body">
+			<div class="status">
+				{{stateText}}
+			</div>
 			<div class="sidebar">
-				<h3>Grasz jako: {{me.nick}}</h3>
-				<div v-if="me.isCzar" class="czar">
+				<div class="status-info">
+					{{stateText}}
+				</div>
+				<div class='nick-info'>
+					Grasz jako: {{me.nick}}
+				</div>
+
+				<div class="round-info">
+					Runda #{{round.number}}
+				</div>
+
+				<div v-if="me.isCzar" class="czar-info">
 					<h2>Jesteś czarem!</h2>
 				</div>
 
-				<div class="round">
-					<h3>Runda #{{round.number}}</h3>
-					<div class="players">
-						<div class="player" v-for="player of orderedPlayers">
-							{{player.nick}}: {{player.points}} pkt
-							{{player.isCzar ? 'czar' : (player.state == 0 ? 'wybiera' : '')}}
-						</div>
+				
+
+				<div class="players-info">
+					<div class="player" v-for="player of orderedPlayers" :class='{czar: player.isCzar, selecting: player.state == 0}'>
+						<div class="points">{{player.points}} pkt</div>
+						<div class="nick">{{player.nick}} {{player.isCzar ? '(czar)' : (player.state == 0 ? '(wybiera)' : '')}}</div>
 					</div>
 				</div>
 			</div>
 			
 			
 			<div class="own-cards" v-if="!me.isCzar">
-				<div class="card" v-for="(card, n) in me.cards">
-					{{card}}<br>
-					<button v-if="me.state == 0" @click="selectCard(card, n)">Wybierz</button>
+				<div class="card" @click='selectCard(card, n)' :class='{selectable: me.state == 0}' v-for="(card, n) in me.cards">
+					{{card}}
 				</div>
 			</div>
 			
-			<div class="card black-card">
-				{{round.blackCard}}
-			</div>
-			<div class="played-cards">
-				<h3>Zagrane karty:</h3>
+			
+			<div class="played-cards" :class='{selecting: me.state >= 2}'>
+				<div class="card black-card">
+					{{round.blackCard}}
+				</div>
 				<div class="card" v-for="(cards, playerID) in round.whiteCards"
-					:class='{winner: playerID == round.winner && me.state == 3}'>
+					:class='{winner: playerID == round.winner && me.state == 3, selectable: me.state == 2 && me.isCzar}'
+					@click="winCard(playerID)">
 					<div v-for="content in cards" v-if="me.state == 2 || me.state == 3">
 						{{content}}
 					</div>
-					<button v-if="me.isCzar && me.state == 2" @click="winCard(playerID)">Wybierz</button>
 				</div>
 				
 			</div>

@@ -1,0 +1,155 @@
+* {
+	margin:0;
+	padding:0;
+	box-sizing: border-box;
+	transition: all 1s ease;
+}
+body{
+	font-family: 'Cabin', sans-serif;
+	min-height: 100vh;
+}
+
+
+.card.black-card{
+	background: #324654;
+	color:#fff;
+}
+.body{
+	display: grid;
+	grid-template-areas: 'status status' 'played played' 'sidebar own' 'sidebar chat';
+	grid-template-columns: 480px 1fr;
+	grid-template-rows: auto auto auto 1fr;
+	height: 100vh;
+}
+.status {
+	grid-area: status;
+	width: 100%;
+	background: #4f3961;
+	color: #fff;
+	font-size: 1.5em;
+	text-align: center;
+	padding: 24px;
+	display: none;
+}
+
+.played-cards {
+	grid-area: played;
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	padding-bottom: 24px;
+	padding-top: 24px;
+	background: #f3d4d4;
+	justify-content: center;
+}
+
+.played-cards.selecting {
+	background: #fb9b9b;
+}
+
+.card {
+	width:150px;
+	height:180px;
+	box-shadow: 1px 1px 5px #00000096;
+	padding:16px;
+	margin-left: 4px;
+	margin-right: 4px;
+	margin-bottom: 8px;
+	background: #fff;
+}
+.card.winner{
+	background: gold;
+}
+
+.card.selectable {
+	transition: all 0.15s ease-in-out;
+}
+
+.card.selectable:hover {
+	box-shadow: 1px 1px 13px 2px #00000096;
+}
+.played-cards .card {
+	width: 180px;
+	min-height: 220px;
+	font-size: 1.25em;
+	margin-left: 12px;
+	margin-right: 12px;
+}
+.own-cards {
+	grid-area: own;
+	background: #f3d4d4;
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	padding: 24px;
+	justify-content: center;
+
+}
+.chat {
+	grid-area: chat; 
+	white-space: pre; 
+	overflow-y: scroll;
+	background: lightgrey;
+	padding: 24px;
+}
+
+.sidebar{
+	grid-area: sidebar;
+	padding: 24px;
+	background: #4f3961;
+	color: #fff;
+
+}
+
+.czar-info {
+	padding: 12px;
+	background: #f3d4d4;
+	color: #4f3961;
+	font-weight: bolder;
+	text-align: center;
+	font-size: 1.5em;
+	margin: 24px;
+	margin-bottom: 0;
+}
+.nick-info {
+	font-size: 1.5em;
+	text-align: center;
+}
+.round-info {
+	padding: 8px;
+	font-size: 1.2em;
+	text-align: center;
+}
+.players-info {
+	display: flex;
+	flex-direction: column;
+	margin-left: 24px;
+	margin-right: 24px;
+	font-size: 1.3em;
+}
+
+.player {
+	display: flex;
+	flex-direction: row;
+	padding: 12px;
+
+	background: #f3d4d4;
+	color: #4f3961;
+}
+
+.player .nick {
+	flex: 1 1;
+	
+}
+.player.czar {
+	background: #a0ffa3;
+}
+.player .points {
+	text-align: center;
+	flex: 0 1 100px;
+}
+
+.status-info {
+	text-align: center;
+	margin-bottom: 24px;
+}
