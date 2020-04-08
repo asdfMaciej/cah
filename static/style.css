@@ -7,6 +7,7 @@
 body{
 	font-family: 'Cabin', sans-serif;
 	min-height: 100vh;
+	overflow-wrap: break-word;
 }
 
 
@@ -39,12 +40,12 @@ body{
 	flex-wrap: wrap;
 	padding-bottom: 24px;
 	padding-top: 24px;
-	background: #f3d4d4;
+	background: #d4f3ef;
 	justify-content: center;
 }
 
 .played-cards.selecting {
-	background: #fb9b9b;
+	background: #9fc3bf;
 }
 
 .card {
@@ -57,6 +58,12 @@ body{
 	margin-bottom: 8px;
 	background: #fff;
 }
+.played-cards .card>div {
+	border-top: 2px solid #324654;
+	margin-bottom: 16px;
+	padding-top: 8px;
+}
+
 .card.winner{
 	background: gold;
 }
@@ -69,15 +76,15 @@ body{
 	box-shadow: 1px 1px 13px 2px #00000096;
 }
 .played-cards .card {
-	width: 180px;
+	width: 200px;
 	min-height: 220px;
-	font-size: 1.25em;
+	font-size: 1.1em;
 	margin-left: 12px;
 	margin-right: 12px;
 }
 .own-cards {
 	grid-area: own;
-	background: #f3d4d4;
+	background: #d4f3ef;
 	display: flex;
 	flex-direction: row;
 	flex-wrap: wrap;
@@ -96,15 +103,15 @@ body{
 .sidebar{
 	grid-area: sidebar;
 	padding: 24px;
-	background: #4f3961;
+	background: #3A3B5B;
 	color: #fff;
 
 }
 
 .czar-info {
 	padding: 12px;
-	background: #f3d4d4;
-	color: #4f3961;
+	background: #d4f3ef;
+	color: #3A3B5B;
 	font-weight: bolder;
 	text-align: center;
 	font-size: 1.5em;
@@ -133,8 +140,8 @@ body{
 	flex-direction: row;
 	padding: 12px;
 
-	background: #f3d4d4;
-	color: #4f3961;
+	background: #d4f3ef;
+	color: #3A3B5B;
 }
 
 .player .nick {

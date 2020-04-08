@@ -317,7 +317,7 @@ function setNewPlayer(socketID, nick) {
 		state: checkIfFinal() ? P_FINAL : P_UNSELECTED,
 		index: playerIndex,
 		isCzar: Object.keys(players).length == 0,
-		cards: getRandomWhiteCards(8).concat(['_', '_']),
+		cards: getRandomWhiteCards(10),
 		socketID: socketID
 	};
 
