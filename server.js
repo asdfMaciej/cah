@@ -18,7 +18,7 @@ function shuffle(a) {
         const j = Math.floor(Math.random() * (i + 1));
         [a[i], a[j]] = [a[j], a[i]];
     }
-    return a;
+    return JSON.parse(JSON.stringify(a));
 }
 
 function strCount(s1, s2) { 
@@ -32,21 +32,9 @@ var socketIO = require('socket.io');
 var c = require('cardcast-api');
 
 var api = new c.CardcastAPI();
-/*
-api.deck('DADD6')
-	.then((results) => {
-		deck.black = results.calls.map(function(item) { 
-			return item.text.join('_');
-		});
-		deck.black = deck.black.filter(c => {return strCount(c, '_') == 1;})
-		deck.white = results.responses.map((r) => {return r.text});
-		console.log(deck);
-		currentDeck.white = currentDeck.white.concat(shuffle(deck.white));
-		currentDeck.black = currentDeck.black.concat(shuffle(deck.black));
-		getRandomWhiteCards(1);
-		getRandomBlackCard();
-	});
-*/
+
+
+
 var app = express();
 var server = http.Server(app);
 
@@ -58,21 +46,20 @@ var io = socketIO(server, {
 app.set('port', 5000);
 app.use('/static', express.static(__dirname + '/static'));
 
-// Routing
+
 app.get('/', function(request, response) {
   response.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Starts the server.
+
 server.listen(5000, function() {
   console.log('Starting server on port 5000');
 });
 
-// Add the WebSocket handlers
-io.on('connection', function(socket) {
-});
 
-var players = {};
+var players = {
+	// nick -> data
+};
 var connections = {
 	// socket id -> nick
 };
@@ -81,23 +68,10 @@ var pings = {
 }
 
 var deck = {
-	white: [
-		"Black Salami",
-		"Tanie piwko",
-		"Płukanie żołądka",
-		"Wściekly Kamil z samolęza",
-		"Czerwona A klasa",
-		"Golenie jaj widelcem",
-		"Tiruriru",
-		"_",
-		"_"
-	],
+	white: ["_","_","_","_","_","_","_","_","_"],
 
 	black: [
-		"Slyszalem ze Twoja corka spała z  _",
-		"Na moim ulubionym zdjęciu stoję z _",
-		"Najwieksze rozczarowanie podczas seksu to _",
-		"_ najbardziej ucieszy wszelkie organizacje"
+		"gra się nie rozpoczęła"
 	]
 }
 
@@ -106,9 +80,56 @@ let currentDeck = {
 	black: []
 }
 
-getRandomWhiteCards(1);
-getRandomBlackCard();
+const DECK_CODES = ['DADD6', 'FXA6V'];
+const WIN_THRESHOLD = 8;
+const DISCONNECT_AFTER_SECONDS = 10;
+const SHOW_WINNER_SECONDS = 5;
+const WHITE_BLANK_PERCENTAGE = 5;
 
+const P_UNSELECTED = 0;
+const P_SELECTED = 1;
+const P_FINAL = 2;
+const P_WINNER = 3;
+
+includeDecks(DECK_CODES);
+
+function includeDecks(DECK_CODES) {
+	let deckCodes = DECK_CODES;
+	let code = deckCodes.pop();
+
+	api.deck(code)
+	.then((results) => {
+		deck.black = deck.black.concat(
+			results.calls.map(function(item) { 
+				return item.text.join('_');
+			})
+		);
+		deck.white = deck.white.concat(
+			results.responses.map((r) => {return r.text})
+		);
+
+		chat(`Pobrano deck: https://www.cardcastgame.com/browse/deck/${code}`);
+
+		if (deckCodes.length) {
+			includeDecks(deckCodes);
+		} else {
+			let whiteCount = deck.white.length;
+			let blackCount = deck.black.length;
+
+			let blankCount = Math.ceil(whiteCount / 100 * WHITE_BLANK_PERCENTAGE);
+			for (let a = 0; a < blankCount; a++)
+				deck.white.push('_');
+
+			currentDeck.white = shuffle(deck.white);
+			currentDeck.black = shuffle(deck.black);
+			
+			chat(`Pobrano wszystkie decki! Restartowanie gry.`);
+			chat(`${blackCount} czarnych kart, ${whiteCount} wypełnionych białych, ${blankCount} pustych białych (${WHITE_BLANK_PERCENTAGE}%).`);
+			newRound();
+		}
+		
+	});
+}
 
 function getRandomWhiteCards(n) {
 	let c = [];
@@ -182,8 +203,14 @@ function checkIfAllPlayed() {
 	return true;
 }
 
-const WIN_THRESHOLD = 8;
-const DISCONNECT_AFTER_SECONDS = 10;
+function checkIfFinal() {
+	for (let nick in players) {
+		let player = players[nick];
+		if (player.state >= P_FINAL)
+			return true;
+	}
+	return false;
+}
 
 function checkForWin() {
 	for (let nick in players)
@@ -198,12 +225,11 @@ function initRound() {
 	round = {
 		number: 0,
 		whiteCards: {},
+		winner: null
 	}
 	round.blackCard = getRandomBlackCard();
 	round.blackFillPlaces = strCount(round.blackCard, '_');
 }
-
-initRound();
 
 function addNewCards() {
 	for (let nick in players) {
@@ -222,8 +248,10 @@ function setPlayerState(state) {
 
 function chat(msg) {
 	let _d = new Date();
-	let d = _d.toLocaleString();
-	io.sockets.emit('CHAT', `[${d}] ${msg}`);
+	let d = _d.toLocaleTimeString();
+	let formatted = `[${d}] ${msg}`;
+	io.sockets.emit('CHAT', formatted);
+	console.log(formatted);
 }
 
 function checkCardsMatch(a, b) {
@@ -232,25 +260,39 @@ function checkCardsMatch(a, b) {
 	return a == b;
 }
 
+function showWinner(nick) {
+	setPlayerState(P_WINNER);
+	round.winner = nick;
+
+	setTimeout(nextRound, SHOW_WINNER_SECONDS * 1000);
+}
+
 function nextRound() {
 	let gameWinner = checkForWin();
 	if (gameWinner) {
 		chat(`WYGRAŁ ${gameWinner.nick}! Ilość rund: ${round.number}\n\n`);
 		return newRound();
 	}
+
 	addNewCards();
 	changeCzar();
 	setPlayerState(P_UNSELECTED);
+	round.winner = null;
 	round.number += 1;
 	round.blackCard = getRandomBlackCard();
 	round.blackFillPlaces = strCount(round.blackCard, '_');
 	round.whiteCards = {};
 }
-
+//
 function newRound() {
 	initRound();
-	for (let player of shuffle(sortedPlayers()))
-		initPlayer(player['id'], player['nick']);
+	let players = shuffle(sortedPlayers());
+
+	for (let player of players)
+		setNewPlayer(player['socketID'], player['nick']);
+
+	changeCzar();
+	setPlayerState(P_UNSELECTED);
 }
 
 function getPlayer(nick) {
@@ -261,7 +303,28 @@ function getNick(socketID) {
 	return connections[socketID];
 }
 
+
 let playerIndex = 0;
+
+function setNewPlayer(socketID, nick) {
+	players[nick] = {
+		nick: nick,
+		points: 0,
+		triesLeft: -1,
+		state: checkIfFinal() ? P_FINAL : P_UNSELECTED,
+		index: playerIndex,
+		isCzar: Object.keys(players).length == 0,
+		cards: getRandomWhiteCards(8).concat(['_', '_']),
+		socketID: socketID
+	};
+
+	connections[socketID] = nick;
+	pings[socketID] = DISCONNECT_AFTER_SECONDS;
+
+	playerIndex += 1;
+	if (Object.keys(players).length === 1)
+		nextRound();
+}
 
 function initPlayer(socketID, nick) {
 	if (players[nick]) {
@@ -276,23 +339,7 @@ function initPlayer(socketID, nick) {
 		return true;
 	}
 
-	players[nick] = {
-		nick: nick,
-		points: 0,
-		triesLeft: -1,
-		state: P_UNSELECTED,
-		index: playerIndex,
-		isCzar: Object.keys(players).length == 0,
-		cards: getRandomWhiteCards(8).concat(['_', '_']),
-		socketID: socketID
-	};
-
-	connections[socketID] = nick;
-	pings[socketID] = DISCONNECT_AFTER_SECONDS;
-
-	playerIndex += 1;
-	if (Object.keys(players).length === 1)
-		nextRound();
+	setNewPlayer(socketID, nick);
 
 	chat(`${nick} dołączył do gry.`);
 	return true;
@@ -300,12 +347,10 @@ function initPlayer(socketID, nick) {
 
 function shufflePlayedCards() {
 	let _c = shuffle(Object.entries(round.whiteCards));
-	console.log(round.whiteCards);
 	let c = {};
 	for (let entry of _c)
 		c[entry[0]] = entry[1];
 	round.whiteCards = c;
-	console.log(c);
 }
 
 function disconnectPlayerSocket(nick) {
@@ -319,8 +364,9 @@ function disconnectPlayerSocket(nick) {
 }
 
 function disconnectPlayer(nick) {
-	if (players[nick].isCzar)
-		nextRound();
+	if (nick in players)
+		if (players[nick].isCzar)
+			nextRound();
 
 	if (nick in round.whiteCards)
 		delete round.whiteCards[nick];
@@ -330,14 +376,10 @@ function disconnectPlayer(nick) {
 	delete pings[players[nick].socketID];
 	delete players[nick];
 
-	
-
 	chat(`Rozłączył się ${nick}`);
 }
 
-const P_UNSELECTED = 0;
-const P_SELECTED = 1;
-const P_FINAL = 2;
+
 //
 io.on('connection', function(socket) {
 	var id = socket.id;
@@ -361,8 +403,14 @@ io.on('connection', function(socket) {
 			return console.log(`[!] ${player.nick} card mismatch!`);
 
 		player.cards.splice(cardIndex, 1);
-		player.state = P_SELECTED;
-		round.whiteCards[nick] = card;
+		
+		if (!(nick in round.whiteCards))
+			round.whiteCards[nick] = [];
+		
+		round.whiteCards[nick].push(card);
+
+		if (round.whiteCards[nick].length == round.blackFillPlaces)
+			player.state = P_SELECTED;
 
 		if(checkIfAllPlayed()) {
 			shufflePlayedCards();
@@ -380,63 +428,40 @@ io.on('connection', function(socket) {
 
 		let czar = getCzar().nick;
 		let winning = round['whiteCards'][playerNick];
-		let black = round.blackCard.replace('_', winning);
+		
+		let black = round.blackCard;
+		for (let card of winning)
+			black = black.replace('_', card);
+
 		players[playerNick].points += 1;
 
 		let msg = `${players[playerNick].nick} wygrał turę (wybierał ${czar}):\n`;
 		msg += `${black}\n`;
 		chat(msg);
 		
-		nextRound();
+		showWinner(playerNick);
 	});
 
 	socket.on('PING', function() {
 		socket.emit('PONG');
-		console.log('PING received');
 	});
 
 	socket.on('PONG', function() {
 		pings[socket.id] = DISCONNECT_AFTER_SECONDS;
 	});
 
-	socket.on('disconnect', function () {
-		/*
-		var nick = getNick(id);
-		var player = getPlayer(nick);
-		if (!player)
-			return;
-
-		if (!nick)
-			return;
-
-		if (!players[nick])
-			return;
-
-		players[nick].triesLeft = 10;
-		attemptDisconnect(nick);
-		
-		console.log(`[*] Disconnect: ${socket.id} as ${player.nick}`);*/
-	});
+	socket.on('disconnect', function () {});
 });
-/*
-function attemptDisconnect(nick) {
-	let triesLeft = players[nick].triesLeft;
-	console.log(`Disconnect attempt for ${nick} - try: ${triesLeft}`);
-	if (triesLeft < 0)
-		return;
 
-	if (triesLeft === 0) {
-		disconnectPlayer(nick);
-	} else {
-		players[nick].triesLeft = triesLeft - 1;
-		setTimeout(attemptDisconnect, 1000, nick);
-	}
-}
-*/
 setInterval(function() {
 	io.sockets.emit('STATE', {
 		players: players,
-		round: round
+		round: round,
+		settings: {
+			decks: DECK_CODES,
+			winThreshold: WIN_THRESHOLD,
+			blanks: WHITE_BLANK_PERCENTAGE
+		}
 	});
 }, 500);
 
@@ -450,8 +475,3 @@ setInterval(function() {
 	}
 	io.sockets.emit('PING', 1000);
 }, 1000);
-
-/*
-setInterval(function() {
-	nextRound();
-}, 2000)*/

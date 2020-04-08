@@ -9,6 +9,7 @@
 			body{font-family: sans-serif;}
 			.own-cards{display:flex;flex-direction: row;}
 			.card{width:150px;height:200px;border: 1px solid black;padding:4px;}
+			.card.winner{background: gold;}
 			.black-card{background: #000;color:#fff;}
 			.body{display:grid; grid-template-areas: 'black sidebar' 'played played' 'own own' 'chat chat';}
 			.sidebar{grid-area: sidebar;}
@@ -50,11 +51,12 @@
 			</div>
 			<div class="played-cards">
 				<h3>Zagrane karty:</h3>
-				<div class="card" v-for="(cards, playerID) in round.whiteCards">
-					<span v-if="me.state == 2">
-						{{cards}}<br>
-						<button v-if="me.isCzar" @click="winCard(playerID)">Wybierz</button>
-					</span>
+				<div class="card" v-for="(cards, playerID) in round.whiteCards"
+					:class='{winner: playerID == round.winner && me.state == 3}'>
+					<div v-for="content in cards" v-if="me.state == 2 || me.state == 3">
+						{{content}}
+					</div>
+					<button v-if="me.isCzar && me.state == 2" @click="winCard(playerID)">Wybierz</button>
 				</div>
 				
 			</div>
