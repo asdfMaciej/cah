@@ -83,11 +83,11 @@ let currentDeck = {
 	black: []
 }
 
-const DECK_CODES = ['DADD6', 'AGZ6T', '9AKRD', 'QD6CA'];
+const DECK_CODES = ['DADD6'];//, 'AGZ6T', '9AKRD', 'QD6CA'];
 const WIN_THRESHOLD = 8;
 const DISCONNECT_AFTER_SECONDS = 10;
 const SHOW_WINNER_SECONDS = 5;
-const WHITE_BLANK_PERCENTAGE = 7;
+const WHITE_BLANK_PERCENTAGE = 100;
 
 const P_UNSELECTED = 0;
 const P_SELECTED = 1;
@@ -383,6 +383,11 @@ function disconnectPlayer(nick) {
 	delete players[nick];
 
 	chat(`Rozłączył się ${nick}`);
+
+	if(checkIfAllPlayed()) {
+		shufflePlayedCards();
+		setPlayerState(P_FINAL);
+	}
 }
 
 

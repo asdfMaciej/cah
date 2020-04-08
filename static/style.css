@@ -17,10 +17,17 @@ body{
 }
 .body{
 	display: grid;
-	grid-template-areas: 'status status' 'played played' 'sidebar own' 'sidebar chat';
+	grid-template-areas: 'status status' 'played played' 'input input' 'sidebar own' 'sidebar chat';
 	grid-template-columns: 480px 1fr;
-	grid-template-rows: auto auto auto 1fr;
+	grid-template-rows: auto auto auto auto 1fr;
 	height: 100vh;
+}
+
+.input {
+	grid-area: input;
+	height: 48px;
+	padding: 8px;
+	font-size: 1.2em;
 }
 .status {
 	grid-area: status;
@@ -64,9 +71,11 @@ body{
 	padding-top: 8px;
 }
 
-.card.winner{
+.card.winner, 
+.player.winner {
 	background: gold;
 }
+
 
 .card.selectable {
 	transition: all 0.15s ease-in-out;

@@ -6,6 +6,14 @@ function shuffle(a) {
     return a;
 }
 
+function asyncPrompt() {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve(prompt("Podaj treść karty:"));
+    }, 50);
+  });
+}
+
 function createCookie(name,value,hours) {
 	if (hours) {
 		var date = new Date();
@@ -43,6 +51,8 @@ var app = new Vue({
 		nick: null,
 		connected: false,
 		connectedTimeout: false,
+		showInput: -1,
+		inputValue: ""
 	},
 
 	mounted: function() {
@@ -108,10 +118,16 @@ var app = new Vue({
 			if (this.me.state != 0)
 				return;
 
-			if (card == "_")
-				card = prompt("Podaj zawartość karty:");
-			this.socket.emit('SELECT CARD', {card: card, index: index});
-			this.players[this.nick].state = 1; // insta change
+			this.showInput = -1;
+			this.inputValue = "";
+
+			if (card == "_") {
+				this.showInput = index;
+			} else {
+				this.socket.emit('SELECT CARD', {card: card, index: index});
+				this.players[this.nick].state = 1; // insta change
+			}
+			
 		},
 
 		winCard: function(playerNick) {

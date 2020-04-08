@@ -12,6 +12,7 @@
 			<div class="status">
 				{{stateText}}
 			</div>
+			<input type="text" class="input" placeholder="Podaj treść pustej karty" v-model="inputValue" v-if='showInput != -1 && me.state == 0' v-on:keyup.enter='selectCard(inputValue, showInput)'>
 			<div class="sidebar">
 				<div class="status-info">
 					{{stateText}}
@@ -28,10 +29,8 @@
 					<h2>Jesteś czarem!</h2>
 				</div>
 
-				
-
 				<div class="players-info">
-					<div class="player" v-for="player of orderedPlayers" :class='{czar: player.isCzar, selecting: player.state == 0}'>
+					<div class="player" v-for="player of orderedPlayers" :class='{czar: player.isCzar, selecting: player.state == 0, winner: player.nick == round.winner}'>
 						<div class="points">{{player.points}} pkt</div>
 						<div class="nick">{{player.nick}} {{player.isCzar ? '(czar)' : (player.state == 0 ? '(wybiera)' : '')}}</div>
 					</div>
