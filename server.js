@@ -83,11 +83,11 @@ let currentDeck = {
 	black: []
 }
 
-const DECK_CODES = ['DADD6', 'FXA6V'];
+const DECK_CODES = ['DADD6', 'AGZ6T', '9AKRD', 'QD6CA'];
 const WIN_THRESHOLD = 2;
 const DISCONNECT_AFTER_SECONDS = 10;
 const SHOW_WINNER_SECONDS = 5;
-const WHITE_BLANK_PERCENTAGE = 5;
+const WHITE_BLANK_PERCENTAGE = 7;
 
 const P_UNSELECTED = 0;
 const P_SELECTED = 1;
